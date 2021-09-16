@@ -1,8 +1,6 @@
 <script lang="ts">
     import "./global.scss";
-    import Counter from "./lib/Counter.svelte";
+    import MainView from "./views/MainView.svelte";
 </script>
 
-<main>
-    <Counter />
-</main>
+<MainView />
