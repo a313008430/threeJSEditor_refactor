@@ -1,4 +1,6 @@
 <script lang="ts">
+    import EngineScenes from "../components/EngineScenes.svelte";
+
     import ResizerLine from "../components/ResizerLine.svelte";
     import TopNav from "../components/TopNav.svelte";
 </script>
@@ -12,7 +14,7 @@
     </div>
     <!-- 中间区域 -->
     <div class="flex-grow h-4 flex flex-row">
-        <div class="flex-grow bg-gray-100">3</div>
+        <div class="flex-grow bg-gray-100"><EngineScenes /></div>
         <div class="flex-none bg-gray-200 w-80 "><ResizerLine />2</div>
     </div>
     <!-- 低部 -->
