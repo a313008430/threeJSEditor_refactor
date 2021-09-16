@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .nav-btn {
+        @apply px-2 text-blue-400;
+    }
+    .active {
+        @apply text-blue-400;
+    }
+}
