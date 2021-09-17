@@ -1,8 +1,15 @@
 <script lang="ts">
+    import { EventGlobal } from "../../common/core/eventEmitter";
+    import { EventMapGlobal } from "../../common/map/EventMap";
+
     import EngineScenes from "../components/EngineScenes.svelte";
 
     import ResizerLine from "../components/ResizerLine.svelte";
     import TopNav from "../components/TopNav.svelte";
+
+    function resizeScenes() {
+        EventGlobal.emit(EventMapGlobal.updateScenesSize);
+    }
 </script>
 
 <div class=" flex flex-col  h-screen">
@@ -14,8 +21,10 @@
     </div>
     <!-- 中间区域 -->
     <div class="flex-grow h-4 flex flex-row">
-        <div class="flex-grow bg-gray-100"><EngineScenes /></div>
-        <div class="flex-none bg-gray-200 w-80 "><ResizerLine />2</div>
+        <div class="flex-grow bg-gray-100 flex flex-row"><EngineScenes /></div>
+        <div class="flex-none bg-gray-200 w-80 ">
+            <ResizerLine resizeEvent={resizeScenes} />
+        </div>
     </div>
     <!-- 低部 -->
     <div

@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { EventGlobal } from "../common/core/eventEmitter";
+import { EventMapGlobal } from "../common/map/EventMap";
 
 export class Engine {
     private renderTime: THREE.Clock = null;
@@ -18,9 +20,19 @@ export class Engine {
      */
     camera: THREE.PerspectiveCamera = null;
 
+    /**
+     * canvas
+     */
+    canvas: HTMLCanvasElement;
+
+    tanFOV;
+    canvasOldHeight;
+
     init(canvas: HTMLCanvasElement) {
-        console.log(canvas);
-        console.log(THREE);
+        if (this.canvas) return;
+        // console.log(canvas);
+
+        this.canvas = canvas;
 
         this.renderTime = new THREE.Clock();
 
@@ -31,7 +43,8 @@ export class Engine {
             //抗锯齿
             antialias: true,
         });
-        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        // this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, true);
+        // console.log(canvas.clientWidth, canvas.clientHeight);
 
         this.sceneGame = new THREE.Scene();
 
@@ -41,6 +54,10 @@ export class Engine {
             0.1,
             1000
         );
+        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+        this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
+        this.canvasOldHeight = canvas.clientHeight;
 
         const geometry = new THREE.BoxGeometry();
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -49,47 +66,32 @@ export class Engine {
 
         this.camera.position.z = 5;
 
-        const animate = () => {
-            requestAnimationFrame(animate);
-
+        this.animate();
+        EventGlobal.addListener(EventMapGlobal.update, () => {
             cube.rotation.x += 0.01;
             cube.rotation.y += 0.01;
+        });
 
-            this.renderer.render(this.sceneGame, this.camera);
-        };
-
-        animate();
+        EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
+        EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
     }
 
     private dt: number;
     private animate() {
         requestAnimationFrame(() => this.animate());
-
         this.renderer.render(this.sceneGame, this.camera);
-
         this.dt = this.renderTime.getDelta();
+        EventGlobal.emit(EventMapGlobal.update, this.dt);
     }
 
-    /**
-     * 更新游戏的正交相机
-     */
-    private updateCameraOrh() {
-        const aspect = window.innerWidth / window.innerHeight;
-        const frustumSize = 1000;
+    private resize() {
+        this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
+        this.camera.fov =
+            (360 / Math.PI) *
+            Math.atan(this.tanFOV * (this.canvas.clientHeight / this.canvasOldHeight));
 
-        // this.cameraOrh.left = (frustumSize * aspect) / -1.6;
-        // this.cameraOrh.right = (frustumSize * aspect) / 1.6;
-        // this.cameraOrh.top = frustumSize / 1.6;
-        // this.cameraOrh.bottom = frustumSize / -1.6;
-        // this.cameraOrh.updateProjectionMatrix();
-
-        // console.log((frustumSize * aspect) / 2, frustumSize / 2)
-
-        // this.cameraOrhBg.left = (frustumSize * aspect) / -1.6;
-        // this.cameraOrhBg.right = (frustumSize * aspect) / 1.6;
-        // this.cameraOrhBg.top = frustumSize / 1.6;
-        // this.cameraOrhBg.bottom = frustumSize / -1.6;
-
-        // this.cameraOrhBg.updateProjectionMatrix();
+        this.camera.updateProjectionMatrix();
+        this.camera.lookAt(this.sceneGame.position);
+        // this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
     }
 }

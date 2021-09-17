@@ -8,6 +8,9 @@
         isClick: boolean = false,
         oldX: number = 0,
         curX: number = 0;
+
+    export let resizeEvent = null;
+
     onMount(() => {
         node.classList.add("relative");
     });
@@ -28,6 +31,7 @@
                 x = node.parentElement.clientWidth;
             }
             node.parentElement.style.width = `${x}px`;
+            if (resizeEvent) resizeEvent();
         }
     }
     function onMouseUp(e: MouseEvent) {
@@ -36,7 +40,7 @@
     }
 </script>
 
-/** * 用来处理分屏拖动适配的组件 */
+<!-- 用来处理分屏拖动适配的组件 -->
 <!-- 拖动的线 -->
 <svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} />
 
