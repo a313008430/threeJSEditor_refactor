@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { EventGlobal } from "../common/core/eventEmitter";
 import { EventMapGlobal } from "../common/map/EventMap";
+import { ScenesControl } from "./ScenesControl";
+import { ScenesDirectionHelper } from "./ScenesDirectionHelper";
 
-export class Engine {
+class EngineControl {
     private renderTime: THREE.Clock = null;
 
     /**
@@ -28,6 +30,8 @@ export class Engine {
     tanFOV;
     canvasOldHeight;
 
+    private viewHelper;
+
     init(canvas: HTMLCanvasElement) {
         if (this.canvas) return;
         // console.log(canvas);
@@ -43,15 +47,16 @@ export class Engine {
             //抗锯齿
             antialias: true,
         });
+        this.renderer.setClearColor(0xaaaaaa);
         // this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, true);
         // console.log(canvas.clientWidth, canvas.clientHeight);
 
         this.sceneGame = new THREE.Scene();
 
         this.camera = new THREE.PerspectiveCamera(
-            75,
+            50,
             canvas.clientWidth / canvas.clientHeight,
-            0.1,
+            0.01,
             1000
         );
         this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
@@ -64,7 +69,8 @@ export class Engine {
         const cube = new THREE.Mesh(geometry, material);
         this.sceneGame.add(cube);
 
-        this.camera.position.z = 5;
+        this.camera.position.set(0, 5, 10);
+        this.camera.lookAt(new THREE.Vector3());
 
         this.animate();
         EventGlobal.addListener(EventMapGlobal.update, () => {
@@ -74,13 +80,144 @@ export class Engine {
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
+
+        // this.renderer.setAnimationLoop(() => {
+        //     this.animate();
+        // });
+
+        //辅助网格线
+        var grid = new THREE.Group();
+        var grid1 = new THREE.GridHelper(30, 30, 0xc5c5c5);
+        grid1.material["color"].setHex(0xc5c5c5);
+        grid1.material["vertexColors"] = false;
+        grid.add(grid1);
+
+        var grid2 = new THREE.GridHelper(30, 6, 0x777777);
+        grid2.material["color"].setHex(0x777777);
+        grid2.material["depthFunc"] = THREE.AlwaysDepth;
+        grid2.material["vertexColors"] = false;
+        grid.add(grid2);
+        // this.sceneGame.add(grid);
+
+        //添加场景旋转
+        // var controls = new ScenesControl(this.camera, this.canvas);
+        // controls.addEventListener("change", function () {
+        //     // signals.cameraChanged.dispatch(camera);
+        //     // signals.refreshSidebarObject3D.dispatch(camera);
+        // });
+
+        //绑定显示当前场景方向
+        // var viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
+        // viewHelper.controls = controls;
+        // this.viewHelper = viewHelper;
+        // EventGlobal.addListener(EventMapGlobal.update, () => {
+        //     if (viewHelper.animating === true) {
+        //         viewHelper.update(this.dt);
+        //     }
+        // });
+
+        //绑定画面触摸事件
+        // this.canvas.addEventListener("mousedown", this.onMouseDown.bind(this), false);
+        // this.canvas.addEventListener("touchstart", this.onTouchStart.bind(this), false);
+        // this.canvas.addEventListener("dblclick", this.onDoubleClick.bind(this), false);
+
+        // this.onDownPosition = new THREE.Vector2();
+        // this.onUpPosition = new THREE.Vector2();
+        // this.onDoubleClickPosition = new THREE.Vector2();
+
+        // this.raycaster = new THREE.Raycaster();
+        // this.mouse = new THREE.Vector2();
+    }
+    onDownPosition;
+    onUpPosition;
+    onDoubleClickPosition;
+
+    raycaster;
+    mouse;
+    objects = [];
+
+    private onMouseDown(event) {
+        var array = this.getMousePosition(this.canvas, event.clientX, event.clientY);
+        this.onDownPosition.fromArray(array);
+        document.addEventListener("mouseup", this.onMouseUp.call(this, event), false);
+    }
+    private onTouchStart(event) {
+        var touch = event.changedTouches[0];
+
+        var array = this.getMousePosition(this.canvas, touch.clientX, touch.clientY);
+        this.onDownPosition.fromArray(array);
+
+        document.addEventListener("touchend", this.onTouchEnd.call(this, event), false);
+    }
+
+    onTouchEnd(event) {
+        var touch = event.changedTouches[0];
+
+        var array = this.getMousePosition(this.canvas, touch.clientX, touch.clientY);
+        this.onUpPosition.fromArray(array);
+
+        this.handleClick();
+
+        document.removeEventListener("touchend", this.onTouchEnd, false);
+    }
+    private onDoubleClick() {}
+
+    private onMouseUp(event) {
+        var array = this.getMousePosition(this.canvas, event.clientX, event.clientY);
+        this.onUpPosition.fromArray(array);
+
+        this.handleClick();
+
+        document.removeEventListener("mouseup", this.onMouseUp, false);
+    }
+
+    private handleClick() {
+        if (this.onDownPosition.distanceTo(this.onUpPosition) === 0) {
+            var intersects = this.getIntersects(this.onUpPosition, this.objects);
+            console.log(intersects);
+
+            if (intersects.length > 0) {
+                var object = intersects[0].object;
+
+                console.log(object);
+
+                if (object.userData.object !== undefined) {
+                    // helper
+                    // editor.select(object.userData.object);
+                } else {
+                    // editor.select(object);
+                }
+            } else {
+                // editor.select(null);
+            }
+
+            // render();
+        }
+    }
+
+    getIntersects(point, objects) {
+        this.mouse.set(point.x * 2 - 1, -(point.y * 2) + 1);
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        return this.raycaster.intersectObjects(objects);
+    }
+
+    getMousePosition(dom, x, y) {
+        var rect = dom.getBoundingClientRect();
+        return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
     }
 
     private dt: number;
     private animate() {
+        // console.log(1);
         requestAnimationFrame(() => this.animate());
+        this.renderer.setViewport(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
         this.renderer.render(this.sceneGame, this.camera);
         this.dt = this.renderTime.getDelta();
+        this.renderer.autoClear = false;
+        this.viewHelper?.render(this.renderer);
+        this.renderer.autoClear = true;
         EventGlobal.emit(EventMapGlobal.update, this.dt);
     }
 
@@ -95,3 +232,5 @@ export class Engine {
         // this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
     }
 }
+
+export const Engine = new EngineControl();
