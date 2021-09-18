@@ -111,7 +111,7 @@ class ScenesDirectionHelper extends THREE.Object3D {
         const point = new THREE.Vector3();
         const dim = 128;
         const turnRate = 2 * Math.PI; // turn rate in angles per second
-
+        // this.scale.set(0.5, 0.5, 0.5);
         this.render = function (renderer) {
             this.quaternion.copy(editorCamera.quaternion).invert();
             this.updateMatrixWorld();
@@ -145,10 +145,27 @@ class ScenesDirectionHelper extends THREE.Object3D {
 
             //
 
-            const x = container.dom.offsetWidth - dim;
-
+            const x =
+                container.dom.offsetWidth - dim + (container.dom.width - container.dom.clientWidth);
+            // console.log(container.dom.offsetWidth);
             renderer.clearDepth();
+
             renderer.setViewport(x, 0, dim, dim);
+
+            //如果不用 setViewport会有一些问题，后期再优化 用了setViewport会有性能问题
+            // camera.left = editorCamera.aspect * camera.bottom;
+            // camera.right = editorCamera.aspect * camera.top;
+
+            // this.renderer.setViewport(
+            //     this.renderer.getContext().drawingBufferWidth / 2 - 100,
+            //     -this.renderer.getContext().drawingBufferHeight / 2 + 100,
+            //     this.canvas.clientWidth + (this.canvas.width - this.canvas.clientWidth),
+            //     this.canvas.clientHeight + (this.canvas.height - this.canvas.clientHeight)
+            // );
+            //------别删，
+
+            camera.updateProjectionMatrix();
+
             renderer.render(this, camera);
         };
 
@@ -290,6 +307,6 @@ class ScenesDirectionHelper extends THREE.Object3D {
     }
 }
 
-ScenesDirectionHelper.prototype.isViewHelper = true;
+// ScenesDirectionHelper.prototype.isViewHelper = true;
 
 export { ScenesDirectionHelper };

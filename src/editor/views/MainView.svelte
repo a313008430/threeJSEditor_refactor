@@ -12,7 +12,7 @@
     }
 </script>
 
-<div class=" flex flex-col  h-screen">
+<div class=" flex flex-col  h-screen ">
     <!-- 顶部菜单 -->
     <div
         class=" flex-none bg-gray-200 text-gray-600 h-6 align-text-bottom border-b-[1px] border-solid border-gray-300"
@@ -23,7 +23,7 @@
     <div class="flex-grow h-4 flex flex-row">
         <div class="flex-grow bg-gray-100 flex flex-row"><EngineScenes /></div>
         <div class="flex-none bg-gray-200 w-80 ">
-            <ResizerLine resizeEvent={resizeScenes} />
+            <ResizerLine resizeEventMouseUp={resizeScenes} />
         </div>
     </div>
     <!-- 低部 -->

@@ -10,6 +10,7 @@
         curX: number = 0;
 
     export let resizeEvent = null;
+    export let resizeEventMouseUp = null;
 
     onMount(() => {
         node.classList.add("relative");
@@ -36,6 +37,7 @@
     }
     function onMouseUp(e: MouseEvent) {
         e.preventDefault();
+        if (resizeEventMouseUp && isClick) resizeEventMouseUp();
         isClick = false;
     }
 </script>

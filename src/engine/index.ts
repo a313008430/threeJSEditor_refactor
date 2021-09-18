@@ -30,7 +30,7 @@ class EngineControl {
     tanFOV;
     canvasOldHeight;
 
-    private viewHelper;
+    private viewHelper: ScenesDirectionHelper;
 
     init(canvas: HTMLCanvasElement) {
         if (this.canvas) return;
@@ -59,7 +59,13 @@ class EngineControl {
             0.01,
             1000
         );
-        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+        this.renderer.setAnimationLoop(() => {
+            this.animate();
+        });
+
+        setTimeout(() => {
+            this.renderer.setSize(canvas.offsetWidth, canvas.clientHeight, false);
+        });
 
         this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
         this.canvasOldHeight = canvas.clientHeight;
@@ -72,7 +78,7 @@ class EngineControl {
         this.camera.position.set(0, 5, 10);
         this.camera.lookAt(new THREE.Vector3());
 
-        this.animate();
+        // this.animate();
         EventGlobal.addListener(EventMapGlobal.update, () => {
             cube.rotation.x += 0.01;
             cube.rotation.y += 0.01;
@@ -80,10 +86,6 @@ class EngineControl {
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
-
-        // this.renderer.setAnimationLoop(() => {
-        //     this.animate();
-        // });
 
         //辅助网格线
         var grid = new THREE.Group();
@@ -97,36 +99,36 @@ class EngineControl {
         grid2.material["depthFunc"] = THREE.AlwaysDepth;
         grid2.material["vertexColors"] = false;
         grid.add(grid2);
-        // this.sceneGame.add(grid);
+        this.sceneGame.add(grid);
 
         //添加场景旋转
-        // var controls = new ScenesControl(this.camera, this.canvas);
-        // controls.addEventListener("change", function () {
-        //     // signals.cameraChanged.dispatch(camera);
-        //     // signals.refreshSidebarObject3D.dispatch(camera);
-        // });
+        var controls = new ScenesControl(this.camera, this.canvas);
+        controls.addEventListener("change", function () {
+            // signals.cameraChanged.dispatch(camera);
+            // signals.refreshSidebarObject3D.dispatch(camera);
+        });
 
         //绑定显示当前场景方向
-        // var viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
-        // viewHelper.controls = controls;
-        // this.viewHelper = viewHelper;
-        // EventGlobal.addListener(EventMapGlobal.update, () => {
-        //     if (viewHelper.animating === true) {
-        //         viewHelper.update(this.dt);
-        //     }
-        // });
+        var viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
+        viewHelper.controls = controls;
+        this.viewHelper = viewHelper;
+        EventGlobal.addListener(EventMapGlobal.update, () => {
+            if (viewHelper.animating === true) {
+                viewHelper.update(this.dt);
+            }
+        });
 
         //绑定画面触摸事件
-        // this.canvas.addEventListener("mousedown", this.onMouseDown.bind(this), false);
-        // this.canvas.addEventListener("touchstart", this.onTouchStart.bind(this), false);
-        // this.canvas.addEventListener("dblclick", this.onDoubleClick.bind(this), false);
+        this.canvas.addEventListener("mousedown", this.onMouseDown.bind(this), false);
+        this.canvas.addEventListener("touchstart", this.onTouchStart.bind(this), false);
+        this.canvas.addEventListener("dblclick", this.onDoubleClick.bind(this), false);
 
-        // this.onDownPosition = new THREE.Vector2();
-        // this.onUpPosition = new THREE.Vector2();
-        // this.onDoubleClickPosition = new THREE.Vector2();
+        this.onDownPosition = new THREE.Vector2();
+        this.onUpPosition = new THREE.Vector2();
+        this.onDoubleClickPosition = new THREE.Vector2();
 
-        // this.raycaster = new THREE.Raycaster();
-        // this.mouse = new THREE.Vector2();
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
     }
     onDownPosition;
     onUpPosition;
@@ -210,26 +212,38 @@ class EngineControl {
 
     private dt: number;
     private animate() {
-        // console.log(1);
-        requestAnimationFrame(() => this.animate());
-        this.renderer.setViewport(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
+        // requestAnimationFrame(() => this.animate());
+        this.renderer.setViewport(
+            0,
+            0,
+            this.canvas.clientWidth + (this.canvas.width - this.canvas.clientWidth),
+            this.canvas.clientHeight + (this.canvas.height - this.canvas.clientHeight)
+        );
         this.renderer.render(this.sceneGame, this.camera);
+
         this.dt = this.renderTime.getDelta();
+
         this.renderer.autoClear = false;
-        this.viewHelper?.render(this.renderer);
+
+        this.viewHelper.render(this.renderer);
+
         this.renderer.autoClear = true;
+
         EventGlobal.emit(EventMapGlobal.update, this.dt);
+        this.camera.updateProjectionMatrix();
     }
 
     private resize() {
+        this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
+
         this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
+
+        //这一行注销会模糊
         this.camera.fov =
             (360 / Math.PI) *
             Math.atan(this.tanFOV * (this.canvas.clientHeight / this.canvasOldHeight));
-
         this.camera.updateProjectionMatrix();
-        this.camera.lookAt(this.sceneGame.position);
-        // this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
+        // this.camera.lookAt(this.sceneGame.position);
     }
 }
 
