@@ -119,9 +119,6 @@ class EngineControl {
         });
 
         //绑定画面触摸事件
-        this.canvas.addEventListener("mousedown", this.onMouseDown.bind(this), false);
-        this.canvas.addEventListener("touchstart", this.onTouchStart.bind(this), false);
-        this.canvas.addEventListener("dblclick", this.onDoubleClick.bind(this), false);
 
         this.onDownPosition = new THREE.Vector2();
         this.onUpPosition = new THREE.Vector2();
@@ -130,58 +127,23 @@ class EngineControl {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
     }
-    onDownPosition;
-    onUpPosition;
-    onDoubleClickPosition;
+    onDownPosition: THREE.Vector2;
+    onUpPosition: THREE.Vector2;
+    onDoubleClickPosition: THREE.Vector2;
 
-    raycaster;
-    mouse;
+    raycaster: THREE.Raycaster;
+    mouse: THREE.Vector2;
     objects = [];
-
-    private onMouseDown(event) {
-        var array = this.getMousePosition(this.canvas, event.clientX, event.clientY);
-        this.onDownPosition.fromArray(array);
-        document.addEventListener("mouseup", this.onMouseUp.call(this, event), false);
-    }
-    private onTouchStart(event) {
-        var touch = event.changedTouches[0];
-
-        var array = this.getMousePosition(this.canvas, touch.clientX, touch.clientY);
-        this.onDownPosition.fromArray(array);
-
-        document.addEventListener("touchend", this.onTouchEnd.call(this, event), false);
-    }
-
-    onTouchEnd(event) {
-        var touch = event.changedTouches[0];
-
-        var array = this.getMousePosition(this.canvas, touch.clientX, touch.clientY);
-        this.onUpPosition.fromArray(array);
-
-        this.handleClick();
-
-        document.removeEventListener("touchend", this.onTouchEnd, false);
-    }
-    private onDoubleClick() {}
-
-    private onMouseUp(event) {
-        var array = this.getMousePosition(this.canvas, event.clientX, event.clientY);
-        this.onUpPosition.fromArray(array);
-
-        this.handleClick();
-
-        document.removeEventListener("mouseup", this.onMouseUp, false);
-    }
 
     private handleClick() {
         if (this.onDownPosition.distanceTo(this.onUpPosition) === 0) {
             var intersects = this.getIntersects(this.onUpPosition, this.objects);
-            console.log(intersects);
+            // console.log(intersects);
 
             if (intersects.length > 0) {
                 var object = intersects[0].object;
 
-                console.log(object);
+                // console.log(object);
 
                 if (object.userData.object !== undefined) {
                     // helper
@@ -205,11 +167,6 @@ class EngineControl {
         return this.raycaster.intersectObjects(objects);
     }
 
-    getMousePosition(dom, x, y) {
-        var rect = dom.getBoundingClientRect();
-        return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
-    }
-
     private dt: number;
     private animate() {
         // requestAnimationFrame(() => this.animate());
@@ -221,13 +178,12 @@ class EngineControl {
         );
         this.renderer.render(this.sceneGame, this.camera);
 
+        //----------
         this.dt = this.renderTime.getDelta();
-
         this.renderer.autoClear = false;
-
         this.viewHelper.render(this.renderer);
-
         this.renderer.autoClear = true;
+        //----------
 
         EventGlobal.emit(EventMapGlobal.update, this.dt);
         this.camera.updateProjectionMatrix();

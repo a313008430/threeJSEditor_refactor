@@ -1,4 +1,6 @@
 import THREE from "three";
+import { EventGlobal } from "../common/core/eventEmitter";
+import { EventMapGlobal } from "../common/map/EventMap";
 
 class ScenesDirectionHelper extends THREE.Object3D {
     animating = false;
@@ -146,7 +148,7 @@ class ScenesDirectionHelper extends THREE.Object3D {
             //
 
             const x =
-                container.dom.offsetWidth - dim + (container.dom.width - container.dom.clientWidth);
+                container.dom.clientWidth - dim + (container.dom.width - container.dom.clientWidth);
             // console.log(container.dom.offsetWidth);
             renderer.clearDepth();
 
@@ -176,16 +178,16 @@ class ScenesDirectionHelper extends THREE.Object3D {
         const q2 = new THREE.Quaternion();
         let radius = 0;
 
-        this.handleClick = function (event) {
-            if (this.animating === true) return false;
+        let dom: HTMLCanvasElement = container.dom;
 
-            const rect = container.dom.getBoundingClientRect();
-            // const offsetX = rect.left + (container.dom.offsetWidth - dim);
-            // const offsetY = rect.top + (container.dom.offsetHeight - dim);
-            const offsetX = 0;
-            const offsetY = 0;
-            mouse.x = ((event.clientX - offsetX) / (rect.width - offsetX)) * 2 - 1;
-            mouse.y = -((event.clientY - offsetY) / (rect.bottom - offsetY)) * 2 + 1;
+        EventGlobal.addListener(EventMapGlobal.onPointerDown, (e: MouseEvent) => {
+            let x = container.dom.clientWidth - dim;
+            let y = container.dom.clientHeight - dim;
+            let clientX = e.clientX - dom.offsetLeft,
+                clientY = e.clientY - dom.offsetTop;
+
+            mouse.x = ((clientX - x) / dim) * 2 - 1;
+            mouse.y = -((clientY - y) / dim) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
 
@@ -203,7 +205,36 @@ class ScenesDirectionHelper extends THREE.Object3D {
             } else {
                 return false;
             }
-        };
+        });
+
+        // this.handleClick = function (event) {
+        //     if (this.animating === true) return false;
+
+        //     const rect = container.dom.getBoundingClientRect();
+        //     // const offsetX = rect.left + (container.dom.offsetWidth - dim);
+        //     // const offsetY = rect.top + (container.dom.offsetHeight - dim);
+        //     const offsetX = 0;
+        //     const offsetY = 0;
+        //     mouse.x = ((event.clientX - offsetX) / (rect.width - offsetX)) * 2 - 1;
+        //     mouse.y = -((event.clientY - offsetY) / (rect.bottom - offsetY)) * 2 + 1;
+
+        //     raycaster.setFromCamera(mouse, camera);
+
+        //     const intersects = raycaster.intersectObjects(interactiveObjects);
+
+        //     if (intersects.length > 0) {
+        //         const intersection = intersects[0];
+        //         const object = intersection.object;
+
+        //         prepareAnimationData(object, this.controls.center);
+
+        //         this.animating = true;
+
+        //         return true;
+        //     } else {
+        //         return false;
+        //     }
+        // };
 
         this.update = function (delta) {
             const step = delta * turnRate;
@@ -307,6 +338,6 @@ class ScenesDirectionHelper extends THREE.Object3D {
     }
 }
 
-// ScenesDirectionHelper.prototype.isViewHelper = true;
+ScenesDirectionHelper.prototype.isViewHelper = true;
 
 export { ScenesDirectionHelper };

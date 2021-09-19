@@ -8,7 +8,22 @@
     function onResize() {
         EventGlobal.emit(EventMapGlobal.resize);
     }
+
+    function onPointerDown(event) {
+        EventGlobal.emit(EventMapGlobal.onPointerDown, event);
+    }
+    function onPointerUp(event) {
+        EventGlobal.emit(EventMapGlobal.onPointerUp, event);
+    }
+    function onPointerMove(event) {
+        EventGlobal.emit(EventMapGlobal.onPointerMove, event);
+    }
 </script>
 
-<svelte:window on:resize={onResize} />
+<svelte:window
+    on:resize={onResize}
+    on:pointerdown={onPointerDown}
+    on:pointerup={onPointerUp}
+    on:pointermove={onPointerMove}
+/>
 <MainView />
