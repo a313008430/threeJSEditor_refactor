@@ -18,6 +18,9 @@
     function onPointerMove(event) {
         EventGlobal.emit(EventMapGlobal.onPointerMove, event);
     }
+    function onDoubleClick(event) {
+        EventGlobal.emit(EventMapGlobal.onDoubleClick, event);
+    }
 </script>
 
 <svelte:window
@@ -25,5 +28,6 @@
     on:pointerdown={onPointerDown}
     on:pointerup={onPointerUp}
     on:pointermove={onPointerMove}
+    on:dblclick={onDoubleClick}
 />
 <MainView />

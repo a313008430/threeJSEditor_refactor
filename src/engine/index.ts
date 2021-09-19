@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { EventGlobal } from "../common/core/eventEmitter";
 import { EventMapGlobal } from "../common/map/EventMap";
-import { ScenesControl } from "./ScenesControl";
+import { OrbitControls } from "./libs/OrbitControls";
+import { ScenesControl } from "./libs/ScenesControl";
+import { TransformControls } from "./libs/TransformControls";
 import { ScenesDirectionHelper } from "./ScenesDirectionHelper";
 
 class EngineControl {
@@ -15,7 +17,7 @@ class EngineControl {
     /**
      * 游戏场景
      */
-    sceneGame: THREE.Scene = null;
+    scene: THREE.Scene = null;
 
     /**
      * 透视像机
@@ -30,14 +32,32 @@ class EngineControl {
     tanFOV;
     canvasOldHeight;
 
-    private viewHelper: ScenesDirectionHelper;
+    private scenesDirectionHelper: ScenesDirectionHelper;
+
+    /**
+     * 物体选择控制器
+     */
+    private objectControl: TransformControls;
+
+    /**
+     * 场景旋转，缩放，移动等控制器
+     */
+    private scenesControl: ScenesControl;
+
+    raycaster: THREE.Raycaster;
+    mouse: THREE.Vector2;
+    /**
+     * 场景添加的对象列表
+     */
+    objects = [];
 
     init(canvas: HTMLCanvasElement) {
         if (this.canvas) return;
         // console.log(canvas);
 
         this.canvas = canvas;
-
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
         this.renderTime = new THREE.Clock();
 
         this.renderer = new THREE.WebGLRenderer({
@@ -48,45 +68,117 @@ class EngineControl {
             antialias: true,
         });
         this.renderer.setClearColor(0xaaaaaa);
-        // this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, true);
-        // console.log(canvas.clientWidth, canvas.clientHeight);
 
-        this.sceneGame = new THREE.Scene();
-
+        this.scene = new THREE.Scene();
+        //相机
         this.camera = new THREE.PerspectiveCamera(
             50,
             canvas.clientWidth / canvas.clientHeight,
             0.01,
             1000
         );
-        this.renderer.setAnimationLoop(() => {
-            this.animate();
-        });
-
-        setTimeout(() => {
-            this.renderer.setSize(canvas.offsetWidth, canvas.clientHeight, false);
-        });
-
-        this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
-        this.canvasOldHeight = canvas.clientHeight;
-
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
-        this.sceneGame.add(cube);
-
         this.camera.position.set(0, 5, 10);
         this.camera.lookAt(new THREE.Vector3());
 
-        // this.animate();
-        EventGlobal.addListener(EventMapGlobal.update, () => {
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
+        this.renderer.setAnimationLoop(() => {
+            this.animate();
         });
+        setTimeout(() => {
+            this.renderer.setSize(canvas.offsetWidth, canvas.clientHeight, false);
+            this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
+            this.canvasOldHeight = canvas.clientHeight;
+        });
+
+        //场景旋转，缩放，移动等控制器
+        this.scenesControl = new ScenesControl(this.camera, this.canvas);
+
+        this.addFloorGrid();
+        this.objectControl = this.objectSelect();
+        this.addScenesDirectionHelper();
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
 
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        this.scene.add(cube);
+        this.objects.push(cube);
+    }
+
+    /**
+     * 场景坐标方向辅助组件
+     */
+    private addScenesDirectionHelper() {
+        let viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
+        viewHelper.controls = this.scenesControl;
+        this.scenesDirectionHelper = viewHelper;
+        EventGlobal.addListener(EventMapGlobal.update, () => {
+            if (viewHelper.animating === true) {
+                viewHelper.update(this.dt);
+            }
+        });
+    }
+
+    /**
+     * 物体选中，双击定焦
+     */
+    private objectSelect() {
+        let control = new TransformControls(this.camera, this.canvas);
+        this.scene.add(control);
+
+        control.addEventListener("dragging-changed", (event) => {
+            this.scenesControl.enabled = !event.value;
+        });
+
+        //绑定画面触摸事件
+        let onDownPosition = new THREE.Vector2(),
+            onUpPosition = new THREE.Vector2();
+        EventGlobal.addListener(EventMapGlobal.onPointerDown, (e: MouseEvent) => {
+            if (e.target != this.canvas) return;
+            onDownPosition.set(e.clientX, e.clientY);
+        });
+
+        EventGlobal.addListener(EventMapGlobal.onPointerUp, (e: MouseEvent) => {
+            if (e.target != this.canvas) return;
+            onUpPosition.set(e.clientX, e.clientY);
+            if (onDownPosition.distanceTo(onUpPosition)) return;
+
+            let obj = this.getSelectObjectIntersects(
+                { x: e.clientX - this.canvas.offsetLeft, y: e.clientY - this.canvas.offsetTop },
+                this.objects
+            );
+            if (obj.length > 0) {
+                let object = obj[0].object;
+                if (object.userData.object !== undefined) {
+                    control.attach(object.userData.object);
+                } else {
+                    control.attach(object);
+                }
+            } else {
+                control.detach();
+            }
+        });
+
+        EventGlobal.addListener(EventMapGlobal.onDoubleClick, (e: MouseEvent) => {
+            if (e.target != this.canvas) return;
+            let obj = this.getSelectObjectIntersects(
+                { x: e.clientX - this.canvas.offsetLeft, y: e.clientY - this.canvas.offsetTop },
+                this.objects
+            );
+            if (obj.length > 0) {
+                let object = obj[0].object;
+                this.scenesControl.focus(object);
+            }
+        });
+
+        return control;
+    }
+
+    /**
+     * 添加场景地面辅助网格
+     */
+    private addFloorGrid() {
         //辅助网格线
         var grid = new THREE.Group();
         var grid1 = new THREE.GridHelper(30, 30, 0xc5c5c5);
@@ -99,69 +191,20 @@ class EngineControl {
         grid2.material["depthFunc"] = THREE.AlwaysDepth;
         grid2.material["vertexColors"] = false;
         grid.add(grid2);
-        this.sceneGame.add(grid);
-
-        //添加场景旋转
-        var controls = new ScenesControl(this.camera, this.canvas);
-        controls.addEventListener("change", function () {
-            // signals.cameraChanged.dispatch(camera);
-            // signals.refreshSidebarObject3D.dispatch(camera);
-        });
-
-        //绑定显示当前场景方向
-        var viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
-        viewHelper.controls = controls;
-        this.viewHelper = viewHelper;
-        EventGlobal.addListener(EventMapGlobal.update, () => {
-            if (viewHelper.animating === true) {
-                viewHelper.update(this.dt);
-            }
-        });
-
-        //绑定画面触摸事件
-
-        this.onDownPosition = new THREE.Vector2();
-        this.onUpPosition = new THREE.Vector2();
-        this.onDoubleClickPosition = new THREE.Vector2();
-
-        this.raycaster = new THREE.Raycaster();
-        this.mouse = new THREE.Vector2();
-    }
-    onDownPosition: THREE.Vector2;
-    onUpPosition: THREE.Vector2;
-    onDoubleClickPosition: THREE.Vector2;
-
-    raycaster: THREE.Raycaster;
-    mouse: THREE.Vector2;
-    objects = [];
-
-    private handleClick() {
-        if (this.onDownPosition.distanceTo(this.onUpPosition) === 0) {
-            var intersects = this.getIntersects(this.onUpPosition, this.objects);
-            // console.log(intersects);
-
-            if (intersects.length > 0) {
-                var object = intersects[0].object;
-
-                // console.log(object);
-
-                if (object.userData.object !== undefined) {
-                    // helper
-                    // editor.select(object.userData.object);
-                } else {
-                    // editor.select(object);
-                }
-            } else {
-                // editor.select(null);
-            }
-
-            // render();
-        }
+        this.scene.add(grid);
     }
 
-    getIntersects(point, objects) {
-        this.mouse.set(point.x * 2 - 1, -(point.y * 2) + 1);
-
+    /**
+     * 返回选择的对象
+     * @param point 鼠标坐标
+     * @param objects 对象列表
+     * @returns 返回对象实例
+     */
+    private getSelectObjectIntersects(point, objects: THREE.Object3D[]) {
+        this.mouse.set(
+            (point.x / this.canvas.clientWidth) * 2 - 1,
+            -((point.y / this.canvas.clientHeight) * 2) + 1
+        );
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
         return this.raycaster.intersectObjects(objects);
@@ -176,12 +219,12 @@ class EngineControl {
             this.canvas.clientWidth + (this.canvas.width - this.canvas.clientWidth),
             this.canvas.clientHeight + (this.canvas.height - this.canvas.clientHeight)
         );
-        this.renderer.render(this.sceneGame, this.camera);
+        this.renderer.render(this.scene, this.camera);
 
         //----------
         this.dt = this.renderTime.getDelta();
         this.renderer.autoClear = false;
-        this.viewHelper.render(this.renderer);
+        this.scenesDirectionHelper.render(this.renderer);
         this.renderer.autoClear = true;
         //----------
 
@@ -199,7 +242,7 @@ class EngineControl {
             (360 / Math.PI) *
             Math.atan(this.tanFOV * (this.canvas.clientHeight / this.canvasOldHeight));
         this.camera.updateProjectionMatrix();
-        // this.camera.lookAt(this.sceneGame.position);
+        // this.camera.lookAt(this.scene.position);
     }
 }
 

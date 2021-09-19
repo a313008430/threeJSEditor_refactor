@@ -14,6 +14,7 @@ const enum EventMapGlobal {
     onPointerDown = "onPointerDown",
     onPointerUp = "onPointerUp",
     onPointerMove = "onPointerMove",
+    onDoubleClick = "onDoubleClick",
 }
 
 /** 物理事件 */

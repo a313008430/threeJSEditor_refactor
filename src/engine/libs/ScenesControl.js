@@ -1,5 +1,8 @@
 import THREE from "three";
 
+//////
+////----------- 和OrbitControls.js 类似
+/////
 /**
  * 场景拖拽控制器
  * @param object
