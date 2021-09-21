@@ -39,6 +39,11 @@ const _objectChangeEvent = { type: 'objectChange' };
 
 class TransformControls extends Object3D {
 
+	showX
+	showY
+	showZ
+	enabled
+
 	constructor(camera, domElement) {
 
 		super();
@@ -343,6 +348,7 @@ class TransformControls extends Object3D {
 
 			if (this.translationSnap) {
 
+
 				if (space === 'local') {
 
 					object.position.applyQuaternion(_tempQuaternion.copy(this._quaternionStart).invert());
@@ -370,6 +376,7 @@ class TransformControls extends Object3D {
 				}
 
 				if (space === 'world') {
+
 
 					if (object.parent) {
 

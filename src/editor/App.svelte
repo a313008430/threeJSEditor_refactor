@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { EventGlobal } from "../common/core/eventEmitter";
+    import { EventGlobal } from "../common/core/EventEmitter";
     import { EventMapGlobal } from "../common/map/EventMap";
 
     import "./global.scss";
@@ -21,6 +21,12 @@
     function onDoubleClick(event) {
         EventGlobal.emit(EventMapGlobal.onDoubleClick, event);
     }
+    function onKeyDown(event) {
+        EventGlobal.emit(EventMapGlobal.onKeyDown, event);
+    }
+    function onKeyUp(event) {
+        EventGlobal.emit(EventMapGlobal.onKeyUp, event);
+    }
 </script>
 
 <svelte:window
@@ -29,5 +35,7 @@
     on:pointerup={onPointerUp}
     on:pointermove={onPointerMove}
     on:dblclick={onDoubleClick}
+    on:keydown={onKeyDown}
+    on:keyup={onKeyUp}
 />
 <MainView />

@@ -1,23 +1,9 @@
 <script lang="ts">
+    import TopMenusConfig from "../../common/config/TopMenusConfig";
+
     let list: HTMLDivElement,
         enter: boolean = false,
-        menus = [
-            {
-                title: "文件",
-                child: [
-                    {
-                        title: "文件",
-                        event: () => {
-                            console.log(1);
-                        },
-                    },
-                    { title: "导入" },
-                ],
-            },
-            { title: "编辑", child: [{ title: "拷贝" }, { title: "删除" }] },
-            { title: "添加", child: [{ title: "组" }, { title: "正文体" }] },
-            { title: "帮助", child: [] },
-        ],
+        menus = TopMenusConfig,
         curMenusIdx: number = null;
 
     function onMouseEnter(e: MouseEvent, idx: number) {
@@ -35,8 +21,8 @@
     }
 </script>
 
-<div class="relative select-none ">
-    <div class="overflow-hidden">
+<div class="relative select-none  ">
+    <div class="overflow-hidden leading-6">
         {#each menus as item, i}
             <div
                 on:mouseenter={(e) => {
@@ -61,11 +47,19 @@
         {#if menus[curMenusIdx] && menus[curMenusIdx].child?.length && enter}
             {#each menus[curMenusIdx].child as item}
                 <div
-                    class="hover:bg-pink-800 hover:text-white cursor-pointer px-2"
-                    on:click={item.event}
+                    class="{item.enabled
+                        ? 'hover:bg-pink-800 hover:text-white cursor-pointer '
+                        : ' cursor-not-allowed  text-gray-300'}  px-2 py-1"
+                    on:click={item.enabled ? item.event : null}
                 >
                     {item.title}
                 </div>
+                {#if item.line}
+                    <div class="divide-y divide-gray-300">
+                        <div />
+                        <div />
+                    </div>
+                {/if}
             {/each}
         {/if}
     </div>

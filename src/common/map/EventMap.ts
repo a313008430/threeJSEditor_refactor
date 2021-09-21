@@ -10,11 +10,15 @@ const enum EventMapGlobal {
     updateScenesSize = "updateScenesSize",
     /** 摇杆控制事件 */
     // control = "control",
+    /** 添加一个3d物体 */
+    addObject = "addObject",
 
     onPointerDown = "onPointerDown",
     onPointerUp = "onPointerUp",
     onPointerMove = "onPointerMove",
     onDoubleClick = "onDoubleClick",
+    onKeyDown = "onKeyDown",
+    onKeyUp = "onKeyUp",
 }
 
 /** 物理事件 */

@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import { EventGlobal } from "../common/core/eventEmitter";
+import { EventGlobal } from "../common/core/EventEmitter";
 import { EventMapGlobal } from "../common/map/EventMap";
-import { OrbitControls } from "./libs/OrbitControls";
 import { ScenesControl } from "./libs/ScenesControl";
 import { TransformControls } from "./libs/TransformControls";
-import { ScenesDirectionHelper } from "./ScenesDirectionHelper";
+import { ScenesDirectionHelper } from "./libs/ScenesDirectionHelper";
+import Stores from "../common/Stores";
+import { CreateObject, ObjectType } from "./component/CreateObject";
 
 class EngineControl {
     private renderTime: THREE.Clock = null;
@@ -51,6 +52,11 @@ class EngineControl {
      */
     objects = [];
 
+    /**
+     * 选中的helper组件
+     */
+    private selectHelper: THREE.Object3D;
+
     init(canvas: HTMLCanvasElement) {
         if (this.canvas) return;
         // console.log(canvas);
@@ -87,10 +93,15 @@ class EngineControl {
             this.renderer.setSize(canvas.offsetWidth, canvas.clientHeight, false);
             this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
             this.canvasOldHeight = canvas.clientHeight;
+
+            // this.animate();
         });
 
         //场景旋转，缩放，移动等控制器
         this.scenesControl = new ScenesControl(this.camera, this.canvas);
+        this.scenesControl["addEventListener"]("change", () => {
+            // this.animate();
+        });
 
         this.addFloorGrid();
         this.objectControl = this.objectSelect();
@@ -98,12 +109,24 @@ class EngineControl {
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
+        EventGlobal.addListener(EventMapGlobal.addObject, this.addObject, this);
 
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
-        this.scene.add(cube);
-        this.objects.push(cube);
+        this.addObject(ObjectType.box);
+    }
+
+    private addObject(type: ObjectType) {
+        let obj = CreateObject.inst.create(type);
+        if (!obj) return;
+        this.scene.add(obj.object);
+        if (obj.helper) {
+            this.scene.add(obj.helper);
+            var picker = obj.helper.getObjectByName("picker");
+            if (picker !== undefined) {
+                this.objects.push(picker);
+            }
+        }
+
+        this.objects.push(obj.object);
     }
 
     /**
@@ -127,6 +150,13 @@ class EngineControl {
         let control = new TransformControls(this.camera, this.canvas);
         this.scene.add(control);
 
+        control.addEventListener("change", () => {
+            Stores.selectObject.update((e) => {
+                return e;
+            });
+            // this.animate();
+        });
+
         control.addEventListener("dragging-changed", (event) => {
             this.scenesControl.enabled = !event.value;
         });
@@ -140,7 +170,7 @@ class EngineControl {
         });
 
         EventGlobal.addListener(EventMapGlobal.onPointerUp, (e: MouseEvent) => {
-            if (e.target != this.canvas) return;
+            if (e.target != this.canvas || !this.objects.length) return;
             onUpPosition.set(e.clientX, e.clientY);
             if (onDownPosition.distanceTo(onUpPosition)) return;
 
@@ -148,15 +178,27 @@ class EngineControl {
                 { x: e.clientX - this.canvas.offsetLeft, y: e.clientY - this.canvas.offsetTop },
                 this.objects
             );
+
             if (obj.length > 0) {
                 let object = obj[0].object;
                 if (object.userData.object !== undefined) {
                     control.attach(object.userData.object);
+                    Stores.selectObject.set(object.userData.object);
+                    if (object.name === "picker") {
+                        Stores.selectHelper.set(object.parent as any);
+                    }
                 } else {
                     control.attach(object);
+                    Stores.selectObject.set(object);
+
+                    // if (object.name === "picker") {
+                    //     Stores.selectHelper.set(object.parent as any);
+                    // }
                 }
             } else {
                 control.detach();
+                Stores.selectObject.set(null);
+                Stores.selectHelper.set(null);
             }
         });
 
@@ -169,6 +211,62 @@ class EngineControl {
             if (obj.length > 0) {
                 let object = obj[0].object;
                 this.scenesControl.focus(object);
+            }
+        });
+
+        EventGlobal.addListener(EventMapGlobal.onKeyDown, (e: KeyboardEvent) => {
+            // console.log(e.key);
+            switch (e.key) {
+                case "Shift":
+                    control.setTranslationSnap(1);
+                    control.setRotationSnap(THREE.MathUtils.degToRad(15));
+                    control.setScaleSnap(0.25);
+                    break;
+
+                case "w":
+                case "W":
+                    control.setMode("translate");
+                    break;
+                case "e":
+                    control.setMode("rotate");
+                    break;
+                case "r":
+                    control.setMode("scale");
+                    break;
+                case "+":
+                    control.setSize(control.size + 0.1);
+                    break;
+                case "-":
+                    control.setSize(Math.max(control.size - 0.1, 0.1));
+                    break;
+                case "X":
+                case "x":
+                    control.showX = !control.showX;
+                    break;
+
+                case "y":
+                case "Y":
+                    control.showY = !control.showY;
+                    break;
+
+                case "z":
+                case "Z":
+                    control.showZ = !control.showZ;
+                    break;
+
+                case " ":
+                    control.enabled = !control.enabled;
+                    break;
+            }
+        });
+
+        EventGlobal.addListener(EventMapGlobal.onKeyUp, (e: KeyboardEvent) => {
+            switch (e.key) {
+                case "Shift":
+                    control.setTranslationSnap(null);
+                    control.setRotationSnap(null);
+                    control.setScaleSnap(null);
+                    break;
             }
         });
 
@@ -206,7 +304,6 @@ class EngineControl {
             -((point.y / this.canvas.clientHeight) * 2) + 1
         );
         this.raycaster.setFromCamera(this.mouse, this.camera);
-
         return this.raycaster.intersectObjects(objects);
     }
 

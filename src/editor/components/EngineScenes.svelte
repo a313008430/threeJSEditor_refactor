@@ -9,4 +9,4 @@
 </script>
 
 <!-- 引擎场景 -->
-<canvas class="h-full w-full flex-grow " bind:this={canvas} />
+<canvas class="h-full w-full flex-grow select-none" bind:this={canvas} />

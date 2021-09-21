@@ -1,6 +1,6 @@
 import THREE from "three";
-import { EventGlobal } from "../common/core/eventEmitter";
-import { EventMapGlobal } from "../common/map/EventMap";
+import { EventGlobal } from "../../common/core/EventEmitter";
+import { EventMapGlobal } from "../../common/map/EventMap";
 
 class ScenesDirectionHelper extends THREE.Object3D {
     animating = false;

@@ -13,16 +13,16 @@
     export let resizeEventMouseUp = null;
 
     onMount(() => {
-        node.classList.add("relative");
+        // node.classList.add("relative");
     });
     function onMouseDown(e: MouseEvent) {
-        e.preventDefault();
+        // e.preventDefault();
         isClick = true;
         oldX = e.pageX;
         curX = node.parentElement.clientWidth;
     }
     function onMouseMove(e: MouseEvent) {
-        e.preventDefault();
+        // e.preventDefault();
         if (isClick) {
             let x = curX + oldX - e.pageX;
             if (
@@ -36,7 +36,7 @@
         }
     }
     function onMouseUp(e: MouseEvent) {
-        e.preventDefault();
+        // e.preventDefault();
         if (resizeEventMouseUp && isClick) resizeEventMouseUp();
         isClick = false;
     }
@@ -49,5 +49,5 @@
 <div
     bind:this={node}
     on:mousedown={onMouseDown}
-    class=" hover:bg-yellow-300  transition-colors duration-50 h-full w-2 cursor-col-resize -translate-x-1 absolute left-0 select-none"
+    class=" hover:bg-yellow-300 transition-colors duration-50 h-full w-2 cursor-col-resize -translate-x-1 absolute left-0 top-0 select-none"
 />
