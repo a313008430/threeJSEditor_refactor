@@ -4,7 +4,7 @@ import { EventMapGlobal } from "../common/map/EventMap";
 import { ScenesControl } from "./libs/ScenesControl";
 import { TransformControls } from "./libs/TransformControls";
 import { ScenesDirectionHelper } from "./libs/ScenesDirectionHelper";
-import Stores from "../common/Stores";
+import { StoreSelectHelper, StoreSelectObject } from "../common/Stores";
 import { CreateObject, ObjectType } from "./component/CreateObject";
 
 class EngineControl {
@@ -74,6 +74,8 @@ class EngineControl {
             antialias: true,
         });
         this.renderer.setClearColor(0xaaaaaa);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         this.scene = new THREE.Scene();
         //相机
@@ -112,6 +114,7 @@ class EngineControl {
         EventGlobal.addListener(EventMapGlobal.addObject, this.addObject, this);
 
         this.addObject(ObjectType.box);
+        this.addObject(ObjectType.directionalLight);
     }
 
     private addObject(type: ObjectType) {
@@ -151,7 +154,7 @@ class EngineControl {
         this.scene.add(control);
 
         control.addEventListener("change", () => {
-            Stores.selectObject.update((e) => {
+            StoreSelectObject.update((e) => {
                 return e;
             });
             // this.animate();
@@ -183,22 +186,29 @@ class EngineControl {
                 let object = obj[0].object;
                 if (object.userData.object !== undefined) {
                     control.attach(object.userData.object);
-                    Stores.selectObject.set(object.userData.object);
+                    StoreSelectObject.set(object.userData.object);
+                    console.log(object.userData.object);
                     if (object.name === "picker") {
-                        Stores.selectHelper.set(object.parent as any);
+                        StoreSelectHelper.set(object.parent as any);
+                        this.selectHelper = object.parent;
+                        control.setMode("translate");
                     }
                 } else {
                     control.attach(object);
-                    Stores.selectObject.set(object);
+                    StoreSelectObject.set(object);
+                    this.selectHelper = null;
+                    StoreSelectHelper.set(null);
+                    console.log(object);
 
                     // if (object.name === "picker") {
-                    //     Stores.selectHelper.set(object.parent as any);
+                    //     StoreSelectHelper.set(object.parent as any);
                     // }
                 }
             } else {
                 control.detach();
-                Stores.selectObject.set(null);
-                Stores.selectHelper.set(null);
+                StoreSelectObject.set(null);
+                StoreSelectHelper.set(null);
+                this.selectHelper = null;
             }
         });
 
@@ -228,10 +238,10 @@ class EngineControl {
                     control.setMode("translate");
                     break;
                 case "e":
-                    control.setMode("rotate");
+                    if (!this.selectHelper) control.setMode("rotate");
                     break;
                 case "r":
-                    control.setMode("scale");
+                    if (!this.selectHelper) control.setMode("scale");
                     break;
                 case "+":
                     control.setSize(control.size + 0.1);

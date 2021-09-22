@@ -4,10 +4,9 @@ export const enum ObjectType {
     group,
     box,
     sphere,
-    ambientLight,
+    // ambientLight,
     directionalLight,
 }
-
 /**
  * 创建物体实例
  */
@@ -21,8 +20,8 @@ export class CreateObject {
                 return this.createBox();
             case ObjectType.sphere:
                 return this.createSphere();
-            case ObjectType.ambientLight:
-                return this.createAmbientLight();
+            // case ObjectType.ambientLight:
+            //     return this.createAmbientLight();
             case ObjectType.directionalLight:
                 return this.createDirectionalLight();
             default:
@@ -35,13 +34,16 @@ export class CreateObject {
             material = new THREE.MeshStandardMaterial(),
             cube = new THREE.Mesh(geometry, material);
         cube.name = "Box";
+
         return { object: cube, helper: null };
     }
     createSphere() {
         let geometry = new THREE.SphereGeometry(),
             material = new THREE.MeshStandardMaterial(),
             cube = new THREE.Mesh(geometry, material);
+
         cube.name = "Sphere";
+
         return { object: cube, helper: null };
     }
 
@@ -54,8 +56,8 @@ export class CreateObject {
     createDirectionalLight() {
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(5, 10, 7.5);
-
         let helper = new THREE.DirectionalLightHelper(light, 1);
+        light.name = "DirectionalLight";
 
         var geometry = new THREE.SphereGeometry(2, 4, 2);
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000, visible: false });

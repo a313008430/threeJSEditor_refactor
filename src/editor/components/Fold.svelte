@@ -1,9 +1,10 @@
-<script lang="ts">
+<script context="module">
     import { ArrowRight } from "../assets/Icons";
+</script>
 
+<script lang="ts">
     export let title: string = "title";
     export let open: boolean = true;
-    console.log(ArrowRight);
 </script>
 
 <div class="border-t border-b border-t-gray-400 border-b-gray-300 my-1">
