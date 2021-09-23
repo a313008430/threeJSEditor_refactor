@@ -15,7 +15,7 @@
 
 <div class="px-3 flex {wrap ? 'flex-wrap' : ''}">
     <span {title} class={"attr-left-title " + titleClassName}>{title}</span>
-    <span class=" flex-grow flex items-center whitespace-nowrap overflow-hidden">
+    <span class=" flex-grow flex items-center whitespace-nowrap overflow-hidden pl-1">
         <slot />
     </span>
 </div>

@@ -1,15 +1,23 @@
 <script lang="ts" context="module">
     let vertexNormalsHelperList: Map<number, VertexNormalsHelper> = new Map();
+    let curType: string = null;
 </script>
 
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy } from "svelte";
+
+    import { EventGlobal } from "../../common/core/EventEmitter";
+    import { EventMapGlobal } from "../../common/map/EventMap";
 
     import { StoreSelectObject } from "../../common/Stores";
     import { VertexNormalsHelper } from "../../engine/libs/VertexNormalsHelper";
 
     import AttributesBox from "./AttributesBox.svelte";
     import Fold from "./Fold.svelte";
+
+    /**
+     * 这个界面里面的 $: 还不是特别熟练需要优化
+     */
 
     let geometry: THREE.BoxGeometry & THREE.SphereGeometry,
         //sphere geometry
@@ -26,18 +34,25 @@
                 return e;
             }
         });
-        updateGeometry();
+
+        if (sphereList.length) updateGeometry();
     }
-
-    $: selectObject = $StoreSelectObject as THREE.Mesh;
-
-    $: geometry = selectObject?.geometry as any;
 
     $: vertexNormalsHelperList.get(selectObject.id)?.update();
 
-    $: if (geometry) {
-        switch (geometry.type) {
+    // TODO 这里需要优化 ，调用次数太多 参考 material 优化
+    $: if ($StoreSelectObject) {
+        selectObject = $StoreSelectObject as THREE.Mesh;
+        geometry = selectObject?.geometry as any;
+
+        switch (geometry?.type) {
             case "SphereGeometry":
+                if (curType == "SphereGeometry") {
+                    break;
+                }
+                sphereList = [];
+                curType = "SphereGeometry";
+
                 if (!sphereList.length) {
                     for (const key in geometry.parameters) {
                         if (Object.prototype.hasOwnProperty.call(geometry.parameters, key)) {
@@ -67,8 +82,27 @@
                     }
                 }
                 break;
+            case "BoxGeometry":
+                if (curType == "BoxGeometry") {
+                    break;
+                }
+                sphereList = [];
+                curType = "BoxGeometry";
+                if (!sphereList.length) {
+                    for (const key in geometry.parameters) {
+                        if (Object.prototype.hasOwnProperty.call(geometry.parameters, key)) {
+                            const element = geometry.parameters[key];
+                            sphereList.push({ key: key, val: element });
+                        }
+                    }
+                }
+                break;
         }
     }
+
+    onDestroy(() => {
+        curType = null;
+    });
 
     function updateGeometry() {
         if (geometry) {
@@ -85,6 +119,16 @@
                         THREE.MathUtils.degToRad(sphereList[6].val)
                     );
                     break;
+                case "BoxGeometry":
+                    selectObject.geometry = new THREE.BoxGeometry(
+                        sphereList[0].val,
+                        sphereList[1].val,
+                        sphereList[2].val,
+                        sphereList[3].val,
+                        sphereList[4].val,
+                        sphereList[5].val
+                    );
+                    break;
             }
             geometry = selectObject.geometry as any;
             // let vertexHelper = vertexNormalsHelperList.get(selectObject.id);
@@ -93,8 +137,13 @@
             //     vertexHelper.update();
             // }
         }
+
+        EventGlobal.emit(EventMapGlobal.render);
     }
 
+    /**
+     * 显示法线
+     */
     function showVertexNormals() {
         if (selectObject) {
             if (vertexNormalsHelperList.has(selectObject.id)) {
@@ -106,12 +155,14 @@
                 selectObject.parent.add(helper);
                 vertexNormalsHelperList.set(selectObject.id, helper);
             }
+
+            EventGlobal.emit(EventMapGlobal.render);
         }
     }
 </script>
 
 {#if geometry}
-    <Fold title="Geometry">
+    <Fold title="Geometry" open={false}>
         <!-- type -->
 
         <AttributesBox title="Type">{geometry.type}</AttributesBox>
@@ -123,7 +174,7 @@
                 <input type="text" class=" attr-input-r " bind:value={geometry.name} />
             </div>
         </AttributesBox>
-        {#if geometry?.type == "SphereGeometry"}
+        {#if ["SphereGeometry", "BoxGeometry"].includes(geometry?.type)}
             {#each sphereList as item}
                 <AttributesBox title={item.key}>
                     <div class="flex-1 flex items-center">

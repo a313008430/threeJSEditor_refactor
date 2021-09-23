@@ -25,10 +25,10 @@
     <div class="overflow-hidden leading-6">
         {#each menus as item, i}
             <div
-                on:mouseenter={(e) => {
+                on:pointerenter={(e) => {
                     onMouseEnter(e, i);
                 }}
-                on:mouseleave={onMouseOut}
+                on:pointerleave={onMouseOut}
                 class="hover:bg-gray-300  hover:text-gray-600 inline-block px-3 cursor-pointer text-gray-500 float-left"
             >
                 {item.title}
@@ -38,10 +38,10 @@
 
     <div
         bind:this={list}
-        on:mouseenter={(e) => {
+        on:pointerenter={(e) => {
             enter = true;
         }}
-        on:mouseleave={onMouseOut}
+        on:pointerleave={onMouseOut}
         class="w-40 absolute bg-gray-200 transition-transform duration-100 "
     >
         {#if menus[curMenusIdx] && menus[curMenusIdx].child?.length && enter}

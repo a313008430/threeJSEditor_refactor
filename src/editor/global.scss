@@ -7,6 +7,11 @@
         @apply flex-shrink-0 whitespace-nowrap w-1/3 min-w-[50px] capitalize;
     }
     .attr-input-r {
-        @apply outline-none w-full min-w-[40px] px-1 flex-1 h-6 cursor-row-resize rounded-md;
+        // cursor-row-resize
+        @apply outline-none w-full min-w-[40px] px-1 flex-1 h-6  rounded-md;
+    }
+    .attr-input-checkbox-r {
+        // cursor-row-resize
+        @apply outline-none px-1  h-4 w-4  rounded-md;
     }
 }

@@ -5,6 +5,9 @@
     import { afterUpdate, beforeUpdate } from "svelte";
     import AttributesBox from "./AttributesBox.svelte";
     import Geometry from "./Geometry.svelte";
+    import { EventGlobal } from "../../common/core/EventEmitter";
+    import { EventMapGlobal } from "../../common/map/EventMap";
+    import Material from "./Material.svelte";
     // import THREE from "three";
     let selectObject: any = null;
     let selectLight: THREE.DirectionalLight = null;
@@ -15,6 +18,7 @@
 
     afterUpdate(() => {
         if (selectHelp) selectHelp.update();
+        EventGlobal.emit(EventMapGlobal.render);
     });
 
     $: selectObject = $StoreSelectObject;
@@ -34,7 +38,7 @@
     }
 </script>
 
-<div class="component-view">
+<div class="component-view  overflow-y-auto overflow-x-hidden h-full">
     <div class=" bg-gray-300 leading-8">
         <button class=" px-3 bg-gray-200"
             ><img class=" inline w-3 mx-1" src={icons} alt="" />Inspector</button
@@ -150,7 +154,7 @@
                 <input
                     type="checkbox"
                     bind:checked={selectObject.visible}
-                    class="outline-none px-1  h-4 w-4  rounded-md"
+                    class="attr-input-checkbox-r"
                 />
             </AttributesBox>
 
@@ -159,7 +163,7 @@
                 <input
                     type="checkbox"
                     bind:checked={selectObject.frustumCulled}
-                    class=" outline-none px-1  h-4 w-4  rounded-md"
+                    class=" attr-input-checkbox-r"
                 />
             </AttributesBox>
             <!-- Shadow -->
@@ -168,7 +172,7 @@
                     id="cost"
                     type="checkbox"
                     bind:checked={selectObject.castShadow}
-                    class=" outline-none px-1  h-4 w-4  rounded-md"
+                    class=" attr-input-checkbox-r"
                 />
                 <label class="px-1 select-none" for="cost">cost</label>
                 {#if selectObject.type == "Mesh"}
@@ -176,7 +180,7 @@
                         id="receive"
                         type="checkbox"
                         bind:checked={selectObject.receiveShadow}
-                        class=" outline-none px-1  h-4 w-4  rounded-md"
+                        class=" attr-input-checkbox-r"
                     />
                     <label class="px-1 select-none" for="receive">receive</label>
                 {/if}
@@ -227,6 +231,7 @@
             </AttributesBox>
 
             <Geometry />
+            <Material />
 
             <!-- 临时组件 -->
             {#if false}
@@ -258,7 +263,7 @@
                 <div class="px-3 flex">
                     <span class="attr-left-title">Type</span>
                     <span class=" flex-grow flex items-center whitespace-nowrap ">
-                        <input type="checkbox" class=" outline-none px-1  h-4 w-4  rounded-md" />
+                        <input type="checkbox" class=" attr-input-checkbox-r" />
                     </span>
                 </div>
                 <!-- input option -->

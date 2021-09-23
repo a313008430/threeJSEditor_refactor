@@ -8,6 +8,8 @@ const enum EventMapGlobal {
     resize = "resize",
     /** 更新场景尺寸  */
     updateScenesSize = "updateScenesSize",
+    /** 渲染 */
+    render = "render",
     /** 摇杆控制事件 */
     // control = "control",
     /** 添加一个3d物体 */

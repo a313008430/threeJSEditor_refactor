@@ -23,7 +23,7 @@
     <!-- 中间区域 -->
     <div class="flex-grow h-4 flex flex-row">
         <div class="flex-grow bg-gray-100 flex flex-row"><EngineScenes /></div>
-        <div class="flex-none bg-gray-200 w-80 relative ">
+        <div class="flex-none bg-gray-200 w-80 relative">
             <ResizerLine resizeEventMouseUp={resizeScenes} />
             <ComponentView />
         </div>
