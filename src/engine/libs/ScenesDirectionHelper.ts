@@ -15,7 +15,7 @@ class ScenesDirectionHelper extends THREE.Object3D {
      * @param editorCamera
      * @param container
      */
-    constructor(editorCamera, container = null) {
+    constructor(editorCamera, container = null, call: Function = null) {
         super();
 
         this.animating = false;
@@ -194,6 +194,7 @@ class ScenesDirectionHelper extends THREE.Object3D {
             const intersects = raycaster.intersectObjects(interactiveObjects);
 
             if (intersects.length > 0) {
+                if (call) call(true);
                 const intersection = intersects[0];
                 const object = intersection.object;
 
@@ -255,6 +256,7 @@ class ScenesDirectionHelper extends THREE.Object3D {
 
             if (q1.angleTo(q2) === 0) {
                 this.animating = false;
+                if (call) call(false);
             }
         };
 

@@ -121,8 +121,15 @@ export default class EngineControl {
         this.objectControl = this.objectSelect();
         this.addScenesDirectionHelper();
 
-        EventGlobal.addListener(EventMapGlobal.render, () => {
-            this.animate();
+        EventGlobal.addListener(EventMapGlobal.render, (ani: boolean) => {
+            if (ani) {
+                this.dt = this.renderTime.getDelta();
+                this.renderer.setAnimationLoop(() => {
+                    this.animate();
+                });
+            } else {
+                this.renderer.setAnimationLoop(null);
+            }
         });
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
@@ -154,7 +161,13 @@ export default class EngineControl {
      * 场景坐标方向辅助组件
      */
     private addScenesDirectionHelper() {
-        let viewHelper = new ScenesDirectionHelper(this.camera, { dom: this.canvas });
+        let viewHelper = new ScenesDirectionHelper(
+            this.camera,
+            { dom: this.canvas },
+            (ani: boolean) => {
+                EventGlobal.emit(EventMapGlobal.render, ani);
+            }
+        );
         viewHelper.controls = this.scenesControl;
         this.scenesDirectionHelper = viewHelper;
         EventGlobal.addListener(EventMapGlobal.update, () => {
@@ -345,8 +358,10 @@ export default class EngineControl {
         return this.raycaster.intersectObjects(objects);
     }
 
+    e;
     private dt: number;
     private animate() {
+        // requestAnimationFrame(this.animate);
         this.renderer.setViewport(
             0,
             0,

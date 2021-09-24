@@ -8,7 +8,7 @@ const enum EventMapGlobal {
     resize = "resize",
     /** 更新场景尺寸  */
     updateScenesSize = "updateScenesSize",
-    /** 渲染 */
+    /** 渲染 需要传入一个boolean值 true为渲染， false停止渲染 */
     render = "render",
     /** 摇杆控制事件 */
     // control = "control",
