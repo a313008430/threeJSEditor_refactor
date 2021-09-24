@@ -13,7 +13,7 @@
     export let wrap = false;
 </script>
 
-<div class="px-3 flex {wrap ? 'flex-wrap' : ''}">
+<div class="px-3 flex {wrap ? 'flex-wrap' : ''} gap-4">
     <span {title} class={"attr-left-title " + titleClassName}>{title}</span>
     <span class=" flex-grow flex items-center whitespace-nowrap overflow-hidden pl-1">
         <slot />

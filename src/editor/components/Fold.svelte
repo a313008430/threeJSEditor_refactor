@@ -20,9 +20,11 @@
                 : 'rotate-0'}">{@html ArrowRight.default}</i
         >{title}
     </div>
-    {#if open}
+    <!-- {#if open} -->
+    <div class=" {open ? '' : 'hidden'}">
         <slot />
-    {/if}
+    </div>
+    <!-- {/if} -->
 </div>
 
 <style>
