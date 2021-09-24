@@ -3,7 +3,7 @@
     export let list: [string, string | number][] = [];
     /** 任性数据类型  但是第一个必须是key string */
     export let listNoIdx: [string, ...any][] = [];
-    export let change: Function = null;
+    export const change: Function = null;
 </script>
 
 <select bind:value on:change>
