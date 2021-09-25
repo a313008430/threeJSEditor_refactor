@@ -67,7 +67,7 @@ export default class EngineControl {
     /**
      * 选中的实例对象组件
      */
-    private selectObject: THREE.Object3D;
+    private selectObject: THREE.Mesh;
 
     init(canvas: HTMLCanvasElement) {
         if (this.canvas) return;
@@ -119,6 +119,7 @@ export default class EngineControl {
 
         this.addFloorGrid();
         this.objectControl = this.objectSelect();
+        this.addKeyEvent();
         this.addScenesDirectionHelper();
 
         EventGlobal.addListener(EventMapGlobal.render, (ani: boolean) => {
@@ -129,12 +130,14 @@ export default class EngineControl {
                 });
             } else {
                 this.renderer.setAnimationLoop(null);
+                this.animate();
             }
         });
 
         EventGlobal.addListener(EventMapGlobal.resize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.updateScenesSize, this.resize, this);
         EventGlobal.addListener(EventMapGlobal.addObject, this.addObject, this);
+        EventGlobal.addListener(EventMapGlobal.removeObject, this.removeObject, this);
 
         this.addObject(ObjectType.box);
         this.addObject(ObjectType.directionalLight);
@@ -144,17 +147,36 @@ export default class EngineControl {
         let obj = CreateObject.inst.create(type);
         if (!obj) return;
         this.scene.add(obj.object);
+        let picker;
         if (obj.helper) {
             this.scene.add(obj.helper);
-            var picker = obj.helper.getObjectByName("picker");
+            picker = obj.helper.getObjectByName("picker");
             if (picker !== undefined) {
                 this.objects.push(picker);
+                this.attackObject(picker);
             }
         }
 
         this.objects.push(obj.object);
 
+        if (!picker) this.attackObject(obj.object);
+
         this.animate();
+        console.log(this.objects);
+    }
+
+    private removeObject() {
+        if (this.selectObject) {
+            if (this.selectHelper) {
+                let picker = this.selectHelper.getObjectByName("picker");
+                this.objects.splice(this.objects.indexOf(picker), 1);
+                this.selectHelper.parent.remove(this.selectHelper);
+            }
+
+            this.selectObject.parent.remove(this.selectObject);
+            this.objects.splice(this.objects.indexOf(this.selectObject), 1);
+            this.attackObject(null);
+        }
     }
 
     /**
@@ -217,42 +239,16 @@ export default class EngineControl {
 
             if (obj.length > 0) {
                 let object = obj[0].object;
-                if (object.userData.object !== undefined) {
-                    if (this.selectObject?.id === object.userData.object.id) return;
-                    control.attach(object.userData.object);
-                    this.selectObject = object.userData.object;
-                    if (object.name === "picker") {
-                        StoreSelectHelper.set(object.parent as any);
-                        this.selectHelper = object.parent;
-                        control.setMode("translate");
-                    }
-                } else {
-                    if (this.selectObject?.id === object.id) return;
-                    control.attach(object);
-                    this.selectObject = object;
-
-                    this.selectHelper = null;
-                    StoreSelectHelper.set(null);
-
-                    // if (object.name === "picker") {
-                    //     StoreSelectHelper.set(object.parent as any);
-                    // }
-                }
-                // StoreSelectAttrObject.set(this.selectObject);
-                StoreSelectObject.set(this.selectObject);
-                StoreSelectMaterialObject.set(this.selectObject["material"] as any);
-                console.log(this.selectObject);
+                this.attackObject(object);
             } else {
-                control.detach();
-                StoreSelectObject.set(null);
-                StoreSelectMaterialObject.set(null);
-                // StoreSelectAttrObject.set(null);
-                StoreSelectHelper.set(null);
-                this.selectHelper = null;
-                this.selectObject = null;
+                this.attackObject(null);
             }
         });
 
+        return control;
+    }
+
+    private addKeyEvent() {
         EventGlobal.addListener(EventMapGlobal.onDoubleClick, (e: MouseEvent) => {
             if (e.target != this.canvas) return;
             let obj = this.getSelectObjectIntersects(
@@ -265,9 +261,13 @@ export default class EngineControl {
             }
         });
 
+        let control = this.objectControl;
         EventGlobal.addListener(EventMapGlobal.onKeyDown, (e: KeyboardEvent) => {
-            // console.log(e.key);
+            console.log(e.key);
             switch (e.key) {
+                case "Backspace":
+                    this.removeObject();
+                    break;
                 case "Shift":
                     control.setTranslationSnap(1);
                     control.setRotationSnap(THREE.MathUtils.degToRad(15));
@@ -320,8 +320,44 @@ export default class EngineControl {
                     break;
             }
         });
+    }
 
-        return control;
+    private attackObject(object: any) {
+        if (object) {
+            if (object.userData.object !== undefined) {
+                if (this.selectObject?.id === object.userData.object.id) return;
+                this.objectControl.attach(object.userData.object);
+                this.selectObject = object.userData.object;
+                if (object.name === "picker") {
+                    StoreSelectHelper.set(object.parent as any);
+                    this.selectHelper = object.parent;
+                    this.objectControl.setMode("translate");
+                }
+            } else {
+                if (this.selectObject?.id === object.id) return;
+                this.objectControl.attach(object);
+                this.selectObject = object;
+
+                this.selectHelper = null;
+                StoreSelectHelper.set(null);
+
+                // if (object.name === "picker") {
+                //     StoreSelectHelper.set(object.parent as any);
+                // }
+            }
+            // StoreSelectAttrObject.set(this.selectObject);
+            StoreSelectObject.set(this.selectObject);
+            StoreSelectMaterialObject.set(this.selectObject["material"] as any);
+            console.log(this.selectObject);
+        } else {
+            this.objectControl.detach();
+            StoreSelectObject.set(null);
+            StoreSelectMaterialObject.set(null);
+            // StoreSelectAttrObject.set(null);
+            StoreSelectHelper.set(null);
+            this.selectHelper = null;
+            this.selectObject = null;
+        }
     }
 
     /**

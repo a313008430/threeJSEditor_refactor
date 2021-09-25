@@ -38,10 +38,10 @@ const TopMenusConfig = [
             {
                 title: "删除",
                 event: () => {
-                    console.log(1);
+                    EventGlobal.emit(EventMapGlobal.removeObject);
                 },
                 line: false,
-                enabled: false,
+                enabled: true,
             },
         ],
     },
@@ -75,7 +75,7 @@ const TopMenusConfig = [
             {
                 title: "环境光",
                 event: () => {
-                    EventGlobal.emit(EventMapGlobal.addObject, ObjectType.ambientLight);
+                    // EventGlobal.emit(EventMapGlobal.addObject, ObjectType.ambientLight);
                 },
                 enabled: false,
             },

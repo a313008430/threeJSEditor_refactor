@@ -34,7 +34,7 @@ export class CreateObject {
             material = new THREE.MeshStandardMaterial(),
             cube = new THREE.Mesh(geometry, material);
         cube.name = "Box";
-        console.log(cube.material);
+        // console.log(cube);
         return { object: cube, helper: null };
     }
     createSphere() {

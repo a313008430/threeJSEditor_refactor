@@ -8,12 +8,14 @@ const enum EventMapGlobal {
     resize = "resize",
     /** 更新场景尺寸  */
     updateScenesSize = "updateScenesSize",
-    /** 渲染 需要传入一个boolean值 true为渲染， false停止渲染 */
+    /** 渲染 需要传入一个boolean值 true为渲染， false停止渲染 但是会渲染一次 */
     render = "render",
     /** 摇杆控制事件 */
     // control = "control",
     /** 添加一个3d物体 */
     addObject = "addObject",
+    /** 删除一个物体 */
+    removeObject = "removeObject",
 
     onPointerDown = "onPointerDown",
     onPointerUp = "onPointerUp",

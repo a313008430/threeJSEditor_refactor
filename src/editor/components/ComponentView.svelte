@@ -38,7 +38,7 @@
     }
 </script>
 
-<div class="component-view  overflow-y-auto overflow-x-hidden h-full">
+<div class="component-view  overflow-y-auto overflow-x-hidden h-full" on:keydown|stopPropagation>
     <div class=" bg-gray-300 leading-8">
         <button class=" px-3 bg-gray-200"
             ><img class=" inline w-3 mx-1" src={icons} alt="" />Inspector</button
@@ -53,7 +53,7 @@
             <!-- name -->
             <AttributesBox title="Name">
                 <div class="flex-1 flex items-center">
-                    <input type="text" class=" attr-input-r " value={selectObject.name} />
+                    <input type="text" class=" attr-input-r" value={selectObject.name} />
                 </div>
             </AttributesBox>
             <!-- transform -->
