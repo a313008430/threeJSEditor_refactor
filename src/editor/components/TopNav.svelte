@@ -21,7 +21,7 @@
     }
 </script>
 
-<div class="relative select-none  ">
+<div class="relative select-none  z-10">
     <div class="overflow-hidden leading-6">
         {#each menus as item, i}
             <div

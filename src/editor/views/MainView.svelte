@@ -2,6 +2,7 @@
     import { EventGlobal } from "../../common/core/EventEmitter";
     import { EventMapGlobal } from "../../common/map/EventMap";
     import ComponentView from "../components/ComponentView.svelte";
+    import EngineInfo from "../components/EngineInfo.svelte";
 
     import EngineScenes from "../components/EngineScenes.svelte";
 
@@ -22,7 +23,10 @@
     </div>
     <!-- 中间区域 -->
     <div class="flex-grow h-4 flex flex-row">
-        <div class="flex-grow bg-gray-100 flex flex-row"><EngineScenes /></div>
+        <div class="flex-grow bg-gray-100 flex flex-row relative">
+            <EngineScenes />
+            <EngineInfo />
+        </div>
         <div class="flex-none bg-gray-200 w-80 relative">
             <ResizerLine resizeEventMouseUp={resizeScenes} />
             <ComponentView />

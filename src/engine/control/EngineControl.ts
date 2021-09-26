@@ -11,6 +11,7 @@ import { instance } from "../core/instance";
 import { ScenesControl } from "../libs/ScenesControl";
 import { ScenesDirectionHelper } from "../libs/ScenesDirectionHelper";
 import { TransformControls } from "../libs/TransformControls";
+import { EngineInfo } from "./EngineInfo";
 
 export default class EngineControl {
     @instance
@@ -24,9 +25,14 @@ export default class EngineControl {
     renderer: THREE.WebGLRenderer = null;
 
     /**
-     * 游戏场景
+     * 游戏场景 用来添加真实场景的东西
      */
     scene: THREE.Scene = null;
+
+    /**
+     * 场景-辅助装饰,只用来添加编辑器的一些场景使用的东西
+     */
+    sceneHelpers: THREE.Scene = null;
 
     /**
      * 透视像机
@@ -90,6 +96,7 @@ export default class EngineControl {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         this.scene = new THREE.Scene();
+        this.sceneHelpers = new THREE.Scene();
         //相机
         this.camera = new THREE.PerspectiveCamera(
             50,
@@ -149,7 +156,7 @@ export default class EngineControl {
         this.scene.add(obj.object);
         let picker;
         if (obj.helper) {
-            this.scene.add(obj.helper);
+            this.sceneHelpers.add(obj.helper);
             picker = obj.helper.getObjectByName("picker");
             if (picker !== undefined) {
                 this.objects.push(picker);
@@ -160,9 +167,9 @@ export default class EngineControl {
         this.objects.push(obj.object);
 
         if (!picker) this.attackObject(obj.object);
-
         this.animate();
         console.log(this.objects);
+        EngineInfo.inst.update(this.scene);
     }
 
     private removeObject() {
@@ -176,6 +183,7 @@ export default class EngineControl {
             this.selectObject.parent.remove(this.selectObject);
             this.objects.splice(this.objects.indexOf(this.selectObject), 1);
             this.attackObject(null);
+            EngineInfo.inst.update(this.scene);
         }
     }
 
@@ -204,7 +212,7 @@ export default class EngineControl {
      */
     private objectSelect() {
         let control = new TransformControls(this.camera, this.canvas);
-        this.scene.add(control);
+        this.sceneHelpers.add(control);
 
         control.addEventListener("change", () => {
             this.animate();
@@ -265,6 +273,7 @@ export default class EngineControl {
         EventGlobal.addListener(EventMapGlobal.onKeyDown, (e: KeyboardEvent) => {
             console.log(e.key);
             switch (e.key) {
+                case "Delete":
                 case "Backspace":
                     this.removeObject();
                     break;
@@ -376,7 +385,7 @@ export default class EngineControl {
         grid2.material["depthFunc"] = THREE.AlwaysDepth;
         grid2.material["vertexColors"] = false;
         grid.add(grid2);
-        this.scene.add(grid);
+        this.sceneHelpers.add(grid);
     }
 
     /**
@@ -394,9 +403,11 @@ export default class EngineControl {
         return this.raycaster.intersectObjects(objects);
     }
 
-    e;
+    private startTime = 0;
+    private endTime = 0;
     private dt: number;
     private animate() {
+        this.startTime = performance.now();
         // requestAnimationFrame(this.animate);
         this.renderer.setViewport(
             0,
@@ -409,12 +420,15 @@ export default class EngineControl {
         //----------
         this.dt = this.renderTime.getDelta();
         this.renderer.autoClear = false;
+        this.renderer.render(this.sceneHelpers, this.camera);
         this.scenesDirectionHelper.render(this.renderer);
         this.renderer.autoClear = true;
         //----------
 
         EventGlobal.emit(EventMapGlobal.update, this.dt);
         this.camera.updateProjectionMatrix();
+        this.endTime = performance.now();
+        EventGlobal.emit(EventMapGlobal.frameTime, this.endTime - this.startTime);
     }
 
     private resize() {

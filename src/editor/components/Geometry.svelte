@@ -10,6 +10,7 @@
     import { EventMapGlobal } from "../../common/map/EventMap";
 
     import { StoreSelectObject } from "../../common/Stores";
+    import { EngineInfo } from "../../engine/control/EngineInfo";
     import { VertexNormalsHelper } from "../../engine/libs/VertexNormalsHelper";
 
     import AttributesBox from "./AttributesBox.svelte";
@@ -136,6 +137,8 @@
             //     vertexHelper.object.geometry = selectObject.geometry;
             //     vertexHelper.update();
             // }
+
+            EngineInfo.inst.update();
         }
 
         EventGlobal.emit(EventMapGlobal.render);

@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+    let objectId: number = null;
+</script>
+
 <script lang="ts">
     import { icons } from "../assets/Icons";
     import { selectHelper, StoreSelectHelper, StoreSelectObject } from "../../common/Stores";
@@ -14,27 +18,33 @@
     let selectHelp: selectHelper = null;
     let lightColor;
 
-    $: selectHelp = $StoreSelectHelper;
-
     afterUpdate(() => {
         if (selectHelp) selectHelp.update();
         EventGlobal.emit(EventMapGlobal.render);
     });
 
-    $: selectObject = $StoreSelectObject;
+    $: {
+        selectHelp = $StoreSelectHelper;
+        selectObject = $StoreSelectObject;
+        if (selectObject) {
+            if (selectObject.type !== "Mesh") {
+                selectLight = selectObject as THREE.DirectionalLight;
 
-    $: if (selectObject) {
-        if (selectObject.type !== "Mesh") {
-            selectLight = selectObject as THREE.DirectionalLight;
-            selectLight.color.setStyle(lightColor);
-            lightColor = "#" + selectLight.color.getHexString();
-        } else {
-            selectLight = null;
+                if (objectId == selectObject.id) {
+                    selectLight.color.setStyle(lightColor);
+                }
+
+                lightColor = "#" + selectLight.color.getHexString();
+            } else {
+                selectLight = null;
+            }
+
+            objectId = selectObject.id;
         }
-    }
 
-    $: if (selectHelp) {
-        selectHelp.update();
+        if (selectHelp) {
+            selectHelp.update();
+        }
     }
 </script>
 

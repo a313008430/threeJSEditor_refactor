@@ -16,6 +16,8 @@ const enum EventMapGlobal {
     addObject = "addObject",
     /** 删除一个物体 */
     removeObject = "removeObject",
+    /** 渲染时间 */
+    frameTime = "frameTime",
 
     onPointerDown = "onPointerDown",
     onPointerUp = "onPointerUp",

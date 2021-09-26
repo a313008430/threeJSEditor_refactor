@@ -10,3 +10,9 @@ export const StoreSelectObject = writable<selectObject>(null);
 export const StoreSelectMaterialObject = writable<any>(null);
 /** 选择的helper */
 export const StoreSelectHelper = writable<selectHelper>(null);
+/** 界面面数等数据  */
+export const EngineInfoStore = writable<{ objects; vertices; triangles }>({
+    objects: 0,
+    vertices: 0,
+    triangles: 0,
+});
